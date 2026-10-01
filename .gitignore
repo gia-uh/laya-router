@@ -1,0 +1,15 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Tooling caches
+.ruff_cache/
+.pytest_cache/
+
+# Laya model cache (downloaded on first real classification)
+.cache/
