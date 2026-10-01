@@ -62,7 +62,10 @@ label plus the flag; your code decides what to do with a weak answer.
 
 ## Measured on CPU
 
-Real numbers from this project on a laptop CPU (multilingual checkpoint, warm):
+Real numbers from this project on a laptop CPU. The engine runs warm (the cold
+start is a separate line).
+
+**Short texts, library mode** (multilingual checkpoint):
 
 | Text | Label | Confidence | Latency |
 | --- | --- | --- | --- |
@@ -70,7 +73,27 @@ Real numbers from this project on a laptop CPU (multilingual checkpoint, warm):
 | "remind me: dentist on Tuesday at 9" | `reminder` | 1.000 | ~112 ms |
 | "I had an idea for organising voice notes" | `idea` | 1.000 | ~119 ms |
 
-The first call loads the checkpoint (seconds); later calls are ~110–130 ms.
+**Long texts, service mode** (`make bench-http` over the ten-label example in
+`examples/invox/`, 21 texts of ~400 characters, HTTP to `laya-serve`):
+
+| Metric | Value |
+| --- | --- |
+| Cold call (first request after start) | ~750–1500 ms |
+| Min | ~330 ms |
+| Median | ~560 ms |
+| Mean | ~560 ms |
+| Max | ~800 ms |
+| Total (21 texts) | ~12 s |
+
+Latency grows with the text length and the service adds the HTTP round trip;
+the library path is faster because it skips it.
+
+> **Accuracy is a property of the categories, not of the transport.** On the
+> ten overlapping invox pipelines, zero-shot accuracy is around **0.5**; with
+> three clear labels it is near 1.0. Overlapping categories and many options
+> (`project_roadmap` vs `idea`, `to_do` vs `email_simple_draft`) are the hard
+> cases. Use fewer options per call, tighten the descriptions, set a threshold,
+> or fine-tune — see [Fine-tuning is the next step](#fine-tuning-is-the-next-step).
 
 ## Categories as data
 
@@ -99,10 +122,29 @@ right" into a number.
 ```bash
 make ci                # fast gate: ruff + format + pyright + unit tests (no model)
 make test-integration  # real Laya with MODEL=… (needs `make models-pull`)
+make help              # every command
 ```
 
 The fast suite injects a fake engine, so it needs no model and stays
 deterministic.
+
+## Layout
+
+```
+src/laya_router/
+  categories.py   # Category + labels.yaml loader (consumer data)
+  engine.py       # Engine seam: LayaEngine (real) | FakeEngine (tests)
+  classifier.py   # Classifier -> Classification (label, confidence, ranking)
+  metrics.py      # accuracy, confusion matrix, threshold curve
+  cli.py          # laya-router classify | evaluate
+scripts/
+  bench_http.py   # per-call latency + accuracy against a running laya-serve
+examples/invox/   # a consumer example: ten labels + a labelled dataset
+docs/
+  DESIGN.md       # what it is, the boundary, the API
+  SERVE.md        # the HTTP service: contract, command, environment
+  JOURNALS/       # turn-by-turn development journal
+```
 
 ## Run against the real model
 
@@ -124,15 +166,25 @@ reimplement it.
 ```bash
 make serve-up       # start laya-serve (background) with MODEL and LAYA_API_KEY
 make serve-smoke    # 401 without token, 200 with token, one real choice
+make bench-http LABELS=examples/invox/labels.yaml DATASET=examples/invox/eval.jsonl
 make serve-down
 ```
 
 Then `POST /v1/systemone` with a `choice` question. Full details, the raw
 command and the environment variables are in [`docs/SERVE.md`](docs/SERVE.md).
 
+## Fine-tuning is the next step
+
+Zero-shot routing between many overlapping categories is limited (see the
+numbers above). The documented path is to fine-tune a checkpoint on labelled
+examples from your domain — Laya reports a large jump (e.g. 0.36 → 0.77 on its
+own benchmark). When that happens, **nothing in this project changes**: point
+the service (or `LAYA_ROUTER_MODEL`) at the new checkpoint, and the contract and
+the clients stay the same.
+
 ## Design
 
-See [`docs/DESIGN.md`](docs/DESIGN.md).
+See [`docs/DESIGN.md`](docs/DESIGN.md) and [`docs/SERVE.md`](docs/SERVE.md).
 
 ## License
 

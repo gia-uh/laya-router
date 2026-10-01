@@ -162,3 +162,11 @@ classify: ## Real classification: make classify LABELS=file.yaml TEXT="..."
 	@test -n "$(TEXT)" || { echo "usage: make classify LABELS=labels.yaml TEXT=\"...\""; exit 1; }
 	@$(MAKE) --no-print-directory models-check MODEL=$(MODEL)
 	HF_HUB_DISABLE_XET=1 uv run python -c "from laya_router.categories import load_labels; from laya_router.classifier import Classifier; import json; r=Classifier(load_labels('$(LABELS)')).classify('''$(TEXT)'''); print(json.dumps({'label':r.label,'confidence':r.confidence,'below_threshold':r.below_threshold,'scores':r.scores}, ensure_ascii=False, indent=2))"
+
+.PHONY: bench-http
+bench-http: ## Per-call latency + accuracy of the running service: make bench-http LABELS=… DATASET=…
+	@test -n "$(LABELS)" || { echo "usage: make bench-http LABELS=labels.yaml DATASET=eval.jsonl"; exit 1; }
+	@test -n "$(DATASET)" || { echo "usage: make bench-http LABELS=labels.yaml DATASET=eval.jsonl"; exit 1; }
+	uv run --with httpx python scripts/bench_http.py \
+		--base-url http://$(SERVE_HOST):$(SERVE_PORT) --token $(LAYA_API_KEY) \
+		--labels $(LABELS) --dataset $(DATASET)
