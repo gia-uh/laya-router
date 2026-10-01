@@ -98,11 +98,37 @@ right" into a number.
 
 ```bash
 make ci                # fast gate: ruff + format + pyright + unit tests (no model)
-make test-integration  # real Laya checkpoints (downloads the model; slow on CPU)
+make test-integration  # real Laya with MODEL=… (needs `make models-pull`)
 ```
 
 The fast suite injects a fake engine, so it needs no model and stays
 deterministic.
+
+## Run against the real model
+
+The model is a **shared resource**: download it once, then both ways of using
+the router read the same cache, offline.
+
+```bash
+make models-pull MODEL=multilingual   # english | multilingual | typed-decisions
+make models-list                      # what is cached
+make classify LABELS=labels.yaml TEXT="Call Ana tomorrow at 9"
+```
+
+## Run as a service
+
+`laya-serve` (shipped by Laya) serves the same checkpoints over HTTP for any
+language to consume. This project launches and documents it; it does not
+reimplement it.
+
+```bash
+make serve-up       # start laya-serve (background) with MODEL and LAYA_API_KEY
+make serve-smoke    # 401 without token, 200 with token, one real choice
+make serve-down
+```
+
+Then `POST /v1/systemone` with a `choice` question. Full details, the raw
+command and the environment variables are in [`docs/SERVE.md`](docs/SERVE.md).
 
 ## Design
 

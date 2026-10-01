@@ -1,0 +1,11 @@
+labels:
+  transcribe: "just transcribe the audio; no analysis is needed"
+  idea: "an idea, reflection or insight to capture and develop"
+  to_do: "a list of tasks or things to do, without dates"
+  reminder: "one or more events or appointments with a date or time"
+  email_simple_draft: "the speaker dictates an email to send to someone"
+  meeting: "a meeting or conversation with several participants, topics and agreements"
+  interview: "an interview or Q&A session, with questions and answers"
+  project_roadmap: "a project proposal: goals, features and phases to plan"
+  blog_post_draft: "the speaker asks for an article or blog post to be written"
+  generic: "a general note that does not fit any specific category above"

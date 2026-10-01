@@ -11,5 +11,10 @@ build/
 .ruff_cache/
 .pytest_cache/
 
+# Local service environment / logs (created by hand during exploration; the
+# Makefile uses `uv run --with "laya[serve]"` instead of a dedicated venv).
+.serve-venv/
+*.log
+
 # Laya model cache (downloaded on first real classification)
 .cache/

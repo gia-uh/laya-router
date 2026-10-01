@@ -11,6 +11,7 @@ criteria, return a probability per label.
 from __future__ import annotations
 
 import logging
+import os
 from collections.abc import Mapping
 from typing import Protocol
 
@@ -35,11 +36,18 @@ class LayaEngine:
         self,
         *,
         repo: str = "convaiinnovations/laya",
-        subfolder: str = "multilingual",
+        subfolder: str | None = None,
         device: str = "cpu",
     ) -> None:
         self._repo = repo
-        self._subfolder = subfolder
+        # `LAYA_ROUTER_MODEL` lets the Makefile's MODEL flow into the engine
+        # (english → repo root, multilingual/typed-decisions → subfolder).
+        env_model = os.environ.get("LAYA_ROUTER_MODEL", "").strip()
+        if subfolder is None:
+            subfolder = (
+                "multilingual" if not env_model else ("" if env_model == "english" else env_model)
+            )
+        self._subfolder = subfolder or None
         self._device = device
         self._agent = None
 
@@ -50,7 +58,7 @@ class LayaEngine:
             logger.info(
                 "laya load repo=%s subfolder=%s device=%s",
                 self._repo,
-                self._subfolder,
+                self._subfolder or "(root)",
                 self._device,
             )
             self._agent = laya.load(self._repo, subfolder=self._subfolder)
