@@ -21,7 +21,7 @@ make models-path                        # where the cache lives
 ## 2. Run the service
 
 ```bash
-make serve-up          # background; MODEL, LAYA_API_KEY, SERVE_PORT from the env
+make serve-up          # background; MODEL, LAYA_API_KEY, SERVE_HOST, SERVE_PORT from the env
 make serve-smoke       # 401 without token, 200 with token, one real choice
 make serve-logs
 make serve-down
@@ -41,6 +41,8 @@ Environment variables the server understands (from Laya):
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
+| `LAYA_HOST` | `0.0.0.0` | bind address (`SERVE_HOST` on the make targets) |
+| `LAYA_PORT` | `8000` | bind port (`SERVE_PORT` on the make targets) |
 | `LAYA_MODELS` | all | checkpoints to preload (`english,multilingual,…`) |
 | `LAYA_DEVICE` | auto | `cpu` or `cuda` |
 | `LAYA_PRELOAD` | `1` | build checkpoints at startup (else lazily) |

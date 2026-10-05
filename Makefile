@@ -105,7 +105,11 @@ models-check: ## (internal) fail with a clear hint when MODEL is not cached
 	else \
 		need="$(MODEL)"; \
 	fi; \
-	if [ ! -d "$(MODELS_DIR)"/models--convaiinnovations--laya*/snapshots/*/$$need ]; then \
+	found=""; \
+	for path in "$(MODELS_DIR)"/models--convaiinnovations--laya*/snapshots/*/"$$need"; do \
+		[ -d "$$path" ] && found="$$path" && break; \
+	done; \
+	if [ -z "$$found" ]; then \
 		echo "model '$(MODEL)' is not downloaded."; \
 		echo "run: make models-pull MODEL=$(MODEL)"; \
 		exit 1; \
@@ -117,6 +121,7 @@ serve-up: ## Start laya-serve (MODEL=$(MODEL)) in the background, token = LAYA_A
 	@if [ -f "$(SERVE_PID)" ] && kill -0 "$$(cat $(SERVE_PID))" 2>/dev/null; then \
 		echo "laya-serve already running (pid $$(cat $(SERVE_PID)))"; exit 0; fi
 	@LAYA_MODELS=$(MODEL) LAYA_DEVICE=cpu LAYA_PRELOAD=1 LAYA_API_KEY=$(LAYA_API_KEY) \
+		LAYA_HOST=$(SERVE_HOST) LAYA_PORT=$(SERVE_PORT) \
 		HF_HUB_DISABLE_XET=1 \
 		nohup uv run --with "laya[serve]" laya-serve > $(SERVE_LOG) 2>&1 & echo $$! > $(SERVE_PID)
 	@echo "laya-serve starting on http://$(SERVE_HOST):$(SERVE_PORT) (log: $(SERVE_LOG))"
@@ -133,7 +138,12 @@ serve-wait: ## Wait until the service answers (with the token)
 
 .PHONY: serve-down
 serve-down: ## Stop laya-serve
-	@if [ -f "$(SERVE_PID)" ]; then kill "$$(cat $(SERVE_PID))" 2>/dev/null || true; rm -f "$(SERVE_PID)"; echo "laya-serve stopped"; else echo "no pid file ($(SERVE_PID))"; fi
+	@if [ -f "$(SERVE_PID)" ]; then \
+		pid=$$(cat $(SERVE_PID)); \
+		pkill -TERM -P "$$pid" 2>/dev/null || true; \
+		kill "$$pid" 2>/dev/null || true; \
+		rm -f "$(SERVE_PID)"; echo "laya-serve stopped"; \
+	else echo "no pid file ($(SERVE_PID))"; fi
 
 .PHONY: serve-logs
 serve-logs: ## Follow the laya-serve log
